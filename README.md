@@ -1,7 +1,7 @@
 # NLvib
-For general information, please see README file of NLvib-Basic branch.
+For general information, please see README file of `NLvib - Basic` branch.
 
-# Branch NLvib - PEACE: Changes w.r.t. NLvib - Basic
+# Branch `NLvib - PEACE`: Changes w.r.t. `NLvib - Basic`
 - `solve_and_continue.m` now additionaly stores 
    - local tangents on converged solution points
    - solution point dependent DSCALE 
