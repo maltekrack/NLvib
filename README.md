@@ -13,6 +13,6 @@ Also, some 'legend' calls (for figures) might require modification.
 # NLvib - Basic and NLvib - PEACE 
 The main branch of NLvib is now split in two options:
 1. NLvib - Basic: traditional, compact implementation
-2. NLvin - PEACE: adapted implementation for model refinement capabilities
+2. NLvib - PEACE: adapted implementation for model refinement capabilities
 
 All EXAMPLES included in `NLvib - Basic` can be run in `NLvib - PEACE`, but not vice versa.
