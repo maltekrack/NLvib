@@ -10,10 +10,11 @@ To get it to run under OCTAVE, you need to change the line(s) that thes the solv
    Solopt = optimset(optimset ("fsolve"),'Display','off',... 'Jacobian','on','MaxIter',50);
 Also, some 'legend' calls (for figures) might require modification.
 
-# Changes w.r.t. NLvib - main branch
+# Changes w.r.t. NLvib - BASIC
 - `solve_and_continue.m` now additionaly stores 
    - local tangents on converged solution points
    - solution point dependent DSCALE 
    - time spent per solution point
-- computation of the tangent and the extended residual function are now 
-- `peace.m` added 
+- computation of the local tangents (`compute_tangent.m`) and the extended residuum (`extended_residual.m`) function are now excluded from `solve_and_continue.m`
+- `peace.m` performs *H-refinement* and *M-refinement* according to **paper-reference-to-be-added**
+- EXAMPLE folder includes test cases according to the publication **paper-reference-to-be-added**
