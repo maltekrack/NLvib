@@ -10,9 +10,10 @@ To get it to run under OCTAVE, you need to change the line(s) that thes the solv
    Solopt = optimset(optimset ("fsolve"),'Display','off',... 'Jacobian','on','MaxIter',50);
 Also, some 'legend' calls (for figures) might require modification.
 
-# NLvib - Basic and NLvib - PEACE 
+# Branches 
 The main branch of NLvib is now split in two options:
-1. NLvib - Basic: traditional, compact implementation
+1. NLvib - Basic: former main branch
 2. NLvib - PEACE: adapted implementation for model refinement capabilities
 
 All EXAMPLES included in `NLvib - Basic` can be run in `NLvib - PEACE`, but not vice versa.
+NLvib -Basic is kept as a branch as it is more compact.
