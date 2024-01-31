@@ -236,6 +236,13 @@ for nl=1:length(nonlinear_elements)
                     repmat(double(qnl-nonlinear_elements{nl}.gap>=0),...
                     1,size(dqnl,2)).*dqnl;
             case 'elasticdryfriction'
+                % Throw error if the nonlinear element has not been
+                % declared as hysteretic
+                if ~nonlinear_elements{nl}.ishysteretic
+                    error(['Nonlinear elements of type ' ...
+                        '<elasticDryFriction> must have property' ...
+                        '<ishysteretic> set to 1.']);
+                end
                 % Set stiffness of elastic dry friction element (aka
                 % Jenkins element)
                 k = nonlinear_elements{nl}.stiffness;
