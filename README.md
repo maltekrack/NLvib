@@ -12,8 +12,8 @@ Also, some 'legend' calls (for figures) might require modification.
 
 # Branches 
 The main branch of NLvib is now split in two options:
-1. NLvib - Basic: former main branch
-2. NLvib - PEACE: adapted implementation for model refinement capabilities
+1. `NLvib - Basic`: former main branch
+2. `NLvib - PEACE`: adapted implementation for model refinement capabilities
 
 All EXAMPLES included in `NLvib - Basic` can be run in `NLvib - PEACE`, but not vice versa.
-NLvib -Basic is kept as a branch as it is more compact.
+`NLvib - Basic` is kept as a branch as it is more compact.
