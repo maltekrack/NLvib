@@ -110,7 +110,7 @@ Om_e = .8;      % start frequency
 Om_s = 1.6;     % end frequency
 
 % Excitation levels
-exc_lev = [2e-4 5e-4 1e-3 3e-3];
+exc_lev = [3e-4 5e-4 1e-3 3e-3];
 Om = cell(size(exc_lev)); a = cell(size(exc_lev));
 for iex=1:length(exc_lev)
     % Set excitation level
