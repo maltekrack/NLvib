@@ -9,3 +9,11 @@ The tool should work well with a wide range of Matlab releases. It mainly relies
 To get it to run under OCTAVE, you need to change the line(s) that thes the solver options to something like:
    Solopt = optimset(optimset ("fsolve"),'Display','off',... 'Jacobian','on','MaxIter',50);
 Also, some 'legend' calls (for figures) might require modification.
+
+# Changes w.r.t. NLvib - main branch
+- `solve_and_continue.m` now additionaly stores 
+   - local tangents on converged solution points
+   - solution point dependent DSCALE 
+   - time spent per solution point
+- computation of the tangent and the extended residual function are now 
+- `peace.m` added 

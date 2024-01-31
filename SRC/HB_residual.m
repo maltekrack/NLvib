@@ -15,7 +15,7 @@
 %   Problems. Springer, 2019. https://doi.org/10.1007/978-3-030-14023-6.
 % 
 % COPYRIGHT AND LICENSING: 
-% NLvib Version 1.3 Copyright (C) 2020  Malte Krack  
+% NLvib Version 1.4 Copyright (C) 2024  Malte Krack  
 %										(malte.krack@ila.uni-stuttgart.de) 
 %                     					Johann Gross 
 %										(johann.gross@ila.uni-stuttgart.de)
@@ -189,11 +189,7 @@ for nl=1:length(nonlinear_elements)
         %   qnl=w'*q, unl = w'*u.
         
         % Determine force direction associated with nonlinear element
-        if size(Q,1)==H+1
-            w = 1;
-        else
-            w = nonlinear_elements{nl}.force_direction;
-        end
+        w = nonlinear_elements{nl}.force_direction;
         W = kron(eye(H+1),w);
         
         % Apply inverse discrete Fourier transform
@@ -236,6 +232,13 @@ for nl=1:length(nonlinear_elements)
                     repmat(double(qnl-nonlinear_elements{nl}.gap>=0),...
                     1,size(dqnl,2)).*dqnl;
             case 'elasticdryfriction'
+                % Throw error if the nonlinear element has not been
+                % declared as hysteretic
+                if ~nonlinear_elements{nl}.ishysteretic
+                    error(['Nonlinear elements of type ' ...
+                        '<elasticDryFriction> must have property' ...
+                        '<ishysteretic> set to 1.']);
+                end
                 % Set stiffness of elastic dry friction element (aka
                 % Jenkins element)
                 k = nonlinear_elements{nl}.stiffness;

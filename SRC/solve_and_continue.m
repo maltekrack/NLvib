@@ -18,7 +18,7 @@
 %   Problems. Springer, 2019. https://doi.org/10.1007/978-3-030-14023-6.
 % 
 % COPYRIGHT AND LICENSING: 
-% NLvib Version 1.3 Copyright (C) 2020  Malte Krack  
+% NLvib Version 1.4 Copyright (C) 2024  Malte Krack  
 %										(malte.krack@ila.uni-stuttgart.de) 
 %                     					Johann Gross 
 %										(johann.gross@ila.uni-stuttgart.de)
@@ -100,8 +100,11 @@
 %       NIT             Number of iterations in each step
 %       FC              Number of function evaluations in each step
 %       IEx             Exit flags of the nonlinear solver in each step
+%       sptime          Time needed for a single solution point
 %       ctime           Total computation time
 %       FCtotal         Total number of function evaluations
+%       tangents        Local tangents evaluated at X
+%       Dscales         Linear preconditioner at X
 %   Sol                 Structure array whose fields are determined by the
 %                       postprocessing functions
 function [X,Solinfo,Sol] = ...
@@ -170,6 +173,7 @@ else
     Solopt = optimset(optimset(@fsolve),'Display','off',...%'iter',...
         'Jacobian','on','MaxIter',50);%,'DerivativeCheck','on');
 end
+
 %% Initialize result vectors
 X = zeros(length(x0)+1,Sopt.stepmax);
 Sol = struct;
@@ -177,8 +181,12 @@ Sol(1:Sopt.stepmax) = struct;
 Solinfo.NIT = zeros(Sopt.stepmax,1);
 Solinfo.IEx = zeros(Sopt.stepmax,1);
 Solinfo.FC = zeros(Sopt.stepmax,1);
+Solinfo.sptime = zeros(Sopt.stepmax,1);
 Solinfo.ctime = 0;
 Solinfo.FCtotal = 0;
+Solinfo.tangents = zeros( length(x0)+1, Sopt.stepmax );
+Solinfo.Dscales  = zeros( length(x0)+1, Sopt.stepmax );
+
 %% Initial guess, reference vector, tangent vector and additional row for
 % extended Jacobian 'c'
 X0 = [x0;lam_s];
@@ -190,7 +198,7 @@ Xold = X0;
 xi = 1;
 %% Find initial solution
 disp('=================================================================');
-disp('NLvib Version 1.3, Copyright (C) 2020 Malte Krack, Johann Gross');
+disp('NLvib Version 1.4, Copyright (C) 2024 Malte Krack, Johann Gross');
 disp('This program comes with ABSOLUTELY NO WARRANTY.');
 disp('This is free software, and you are welcome to redistribute');
 disp('it under certain conditions, see gpl-3.0.txt.');
@@ -200,8 +208,9 @@ disp('--------------------');
 
 % Relax maximum number of iterations constraint for first solution point
 solopt_tmp = Solopt;
-Solopt = optimset(solopt_tmp,'MaxIter',500,'Display','iter');
-
+Solopt = optimset(solopt_tmp,'MaxIter',500,'Display','off');
+Solopt.TolX = 1e-12;
+Solopt.TolFun = 1e-12;
 % Solve nonlinear system of equations once for initial solution
 if Sopt.flag || isfield(Sopt,'init')&&Sopt.init.flag
     flagtmp = Sopt.flag;
@@ -236,6 +245,10 @@ X(:,1) = diag(Sopt.Dscale)*X0;
 Solinfo.IEx(1) = iEx;
 Solinfo.NIT(1) = output.iterations;
 Solinfo.FC(1) = output.funcCount;
+Solinfo.tangents(:,1) = diag(Sopt.Dscale)*zref;
+Solinfo.Dscales(:,1)  = Sopt.Dscale;
+
+
 if ~isempty(fun_postprocess)
     tmp = feval(fun_postprocess,diag(Sopt.Dscale)*X0);
 else
@@ -281,32 +294,14 @@ while istep<=Sopt.stepmax
             zref    = zref.*Dscaleold;
         end
     end
+    
     %% PREDICT
     
     % Determine predictor direction (in the unscaled system)
     if Sopt.flag
         switch Sopt.predictor
             case 'tangent'
-                [~,kk] = sort(abs(zref./max(abs(Xref),1e-4)),...
-                    1,'descend');
-                % Temporarily switch off warning
-                warning('off','MATLAB:nearlySingularMatrix');
-                warning('off','MATLAB:singularMatrix');
-                for ik=1:length(kk)
-                    k = kk(ik);
-                    c = zeros(length(X0),1); c(k) = 1;
-                    % Determine unit tangent to the solution
-                    % path (Eq. 4.8)
-                    ztmp = [J(1:end-1,:);c']\...
-                        [zeros(size(J,1)-1,1);1];
-                    if ~any(isnan(ztmp))
-                        % Successful!
-                        break;
-                    end
-                end
-                % Switch warning on again
-                warning('on','MATLAB:nearlySingularMatrix');
-                warning('on','MATLAB:singularMatrix');
+                ztmp = compute_tangent(J,Xref,zref);                 
             case 'secant'
                 if istep>2
                     % Secant predictor
@@ -335,7 +330,7 @@ while istep<=Sopt.stepmax
     % Ensure forward stepping along solution path
     if Sopt.flag
         if (istep > 2) && ...
-                (transpose(X0-Xold)*(dir*Sopt.ds*z) < 0);
+                (transpose(X0-Xold)*(dir*Sopt.ds*z) < 0)
             XP = X0-dir*Sopt.ds*z;
         end
     end
@@ -381,25 +376,48 @@ while istep<=Sopt.stepmax
                     ' parametrization constraint.']);
         end
         % Solve extended nonlinear system of equations
+        SPtimeTmp = tic;
         [Xtmp,Rext,iEx,output,Jtmp] = ...
             fsolve(@(X) extended_residual( ...
-            X,Xref,zref,fun_residual,Sopt),XP,Solopt);
+            X,Xref,zref,fun_residual,Sopt),XP,Solopt); 
+        SPtime = toc(SPtimeTmp);
     else
         % Solve extended nonlinear system of equations
+        SPtimeTmp = tic;
         [Xtmp,Rext,iEx,output,Jtmp] = ...
             fsolve(@(X) extended_residual( ...
             [X;XP(end)],Xref,zref,fun_residual,Sopt),XP(1:end-1),Solopt);
+        SPtime = toc(SPtimeTmp);
     end
+
+    % store solver stats    
+    Solinfo.IEx(istep) = iEx;
+    Solinfo.NIT(istep) = output.iterations;
+    Solinfo.FC(istep)  = output.funcCount;
+    % and solution point properties
+    Solinfo.tangents( :,istep-1 ) = diag(Sopt.Dscale)*z;
+    Solinfo.Dscales(:,istep) = Sopt.Dscale;
+    Solinfo.sptime(istep)  = SPtime;
+
+
     %% ACCEPT/REJECT POINT
-    if iEx<1 && sqrt(Rext'*Rext)>Sopt.eps
+    if iEx<1 && (Rext'*Rext)>Sopt.eps
 		% Reject point
         if  (Sopt.ds == Sopt.dsmin) || (ierr>=Sopt.errmax)
             if Sopt.stoponerror
+                
+                % re-use previous tangent for this point
+                Solinfo.tangents( :,istep ) = diag(Sopt.Dscale)*z;
+
                 % Delete unused fields and break
                 X(:,istep:end) = [];
                 Solinfo.NIT(istep:end) = [];
                 Solinfo.IEx(istep:end) = [];
                 Solinfo.FC(istep:end) = [];
+                Solinfo.sptime(istep:end) = [];
+                Solinfo.tangents(:,istep+1:end) = [];
+                Solinfo.Dscales(:,istep:end) = [];
+
                 disp(['No convergence, stopping ' ...
                     'continuation.']);
                 break;
@@ -461,9 +479,6 @@ while istep<=Sopt.stepmax
     
     % Save solution point
     X(:,istep) = diag(Sopt.Dscale)*X0;
-    Solinfo.IEx(istep) = iEx;
-    Solinfo.NIT(istep) = output.iterations;
-    Solinfo.FC(istep)  = output.funcCount;
     
     % Call postprocessing function
     if ~isempty(fun_postprocess)
@@ -486,12 +501,23 @@ while istep<=Sopt.stepmax
     % is met
     if ( ((X0(end) >= lam_e)&&(dir==1)) || ...
             ((X0(end) <= lam_e)&&(dir==-1)) ) || any(term)
+
+        % compute and store tangent at last point
+        ztmp = compute_tangent(J,X0,zref); 
+        ztmp = ztmp./Sopt.Dscale;
+        z = ztmp/norm(ztmp);
+        Solinfo.tangents( :,istep ) = diag(Sopt.Dscale)*z;
+
         % Delete unused fields and break
         X(:,istep+1:end) = [];
         Sol(istep+1:end) = [];
         Solinfo.NIT(istep+1:end) = [];
         Solinfo.IEx(istep+1:end) = [];
         Solinfo.FC(istep+1:end) = [];
+        Solinfo.sptime(istep+1:end) = [];        
+        Solinfo.tangents(:,istep+1:end) = [];
+        Solinfo.Dscales(:,istep+1:end) = [];
+
         if any(term)
             disp(['Terminating continuation since at least one of the ' ...
                 'termination criteria is met.']);
@@ -539,89 +565,6 @@ disp('COMPUTATIONAL EFFORT:');
 disp(['Total elapsed time (toc) is ',num2str(Solinfo.ctime,'%16.1f'),' s']);
 disp(['Total number of function evaluations is ', ...
     num2str(Solinfo.FCtotal)]);
-end
-function [Rext,dRextdX] = extended_residual(X,Xref,zref,...
-    fun_residual,Sopt)
-%% Evaluation of the residual function and its derivative
-switch Sopt.jac
-    case {'full','on'}
-        [R,dRdX] = feval(fun_residual,diag(Sopt.Dscale)*X);
-    case 'x'
-        [R,dRdx] = feval(fun_residual,diag(Sopt.Dscale)*X);
-        
-        % Approximate dfdlam using finite differences
-        dlam = max(Sopt.eps*abs(X(end)),Sopt.eps);
-        Xtmp = X; Xtmp(end) = X(end)+dlam;
-        dlam = Xtmp(end)-X(end);
-        Rp = feval(fun_residual,diag(Sopt.Dscale)*Xtmp);
-        dRdlam = (Rp-R)/dlam/Sopt.Dscale(end);
-        dRdX = [dRdx dRdlam];
-    otherwise
-        R = feval(fun_residual,diag(Sopt.Dscale)*X);
-        Smyopt = struct('epsrel',Sopt.eps,'epsabs',Sopt.eps, ...
-            'ikeydx',1,'ikeyfd',1);
-        dRdX = finite_difference_jacobian(fun_residual,...
-            diag(Sopt.Dscale)*X,Smyopt);
-end
-%% Evaluation of the parametrization constraint equation and its derivative
-if Sopt.flag
-    switch Sopt.parametrization
-        case {'arc_length'}
-            % iteration on a normal plane, perpendicular to tangent
-            p = transpose((X-Xref))*(X-Xref)-Sopt.ds^2;
-            dpdX = 2*transpose(X-Xref);
-        case 'pseudo_arc_length'
-            p = Sopt.pseudoxi*...
-                transpose((X(1:end-1)-...
-                Xref(1:end-1)))*(X(1:end-1)-...
-                Xref(1:end-1)) + (1-Sopt.pseudoxi)*...
-                (X(end)-Xref(end))^2 - ...
-                Sopt.ds^2;
-            dpdX = [Sopt.pseudoxi*...
-                2*transpose(X(1:end-1)-Xref(1:end-1)) ...
-                2*(1-Sopt.pseudoxi)*...
-                (X(end)-Xref(end))] ;
-        case {'local','orthogonal'}
-            % Solution on hyperplane through Xref, normal to zref
-            % Eq. (4.22)
-            p       = transpose(zref)*(X-Xref);
-            dpdX    = transpose(zref);
-        case {'normal'}
-            [~,kk] = sort(abs(zref./max(abs(X),1e-4)),...
-                1,'descend');
-            % Temporarily switch off warning
-            warning('off','MATLAB:nearlySingularMatrix');
-            warning('off','MATLAB:singularMatrix');
-            for ik=1:length(kk)
-                k = kk(ik);
-                c = zeros(length(X),1); c(k) = 1;
-                % Determine unit tangent to the solution
-                % path (Eq. 4.8)
-                ztmp = [dRdX;c']\...
-                    [zeros(size(dRdX,1),1);1];
-                if ~any(isnan(ztmp))
-                    % Erfolgreich!
-                    break;
-                end
-            end
-            % Switch warning on again
-            warning('on','MATLAB:nearlySingularMatrix');
-            warning('on','MATLAB:singularMatrix');
-            z       = ztmp/norm(ztmp);
-            p       = z'*(X-Xref);
-            dpdX    = transpose(z);
-        otherwise
-            error('Invalid specification of path continuation constraint');
-    end
-end
-%% Assembly of extended residual and derivative
-if Sopt.flag
-    Rext = [R;p];
-    dRextdX = [dRdX*diag(Sopt.Dscale);dpdX];
-else
-    Rext = R;
-    dRextdX = dRdX(:,1:end-1)*diag(Sopt.Dscale(1:end-1));
-end
 end
 function J = finite_difference_jacobian(Hfuncname, x0, Smyopt, varargin)
 %========================================================================
