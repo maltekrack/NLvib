@@ -10,4 +10,4 @@ For general information, please see README file of `NLvib - Basic` branch.
 - `peace.m` performs *H-refinement* and *M-refinement* according to [1]
 - EXAMPLE folder includes test cases according to [1]
 
-[1] **paper-reference-to-be-added**
+[1] Gross, Johann; Gupta, Vasudev; Berthold, Christian; Krack, Malte (2024): A new paradigm for multi-fidelity continuation using parallel model refinement. Computer Methods in Applied Mechanics and Engineering. (https://doi.org/10.1016/j.cma.2024.116860)https://doi.org/10.1016/j.cma.2024.116860
