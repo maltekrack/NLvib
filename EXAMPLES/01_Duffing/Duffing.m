@@ -41,7 +41,7 @@ P = 0.18;
 
 % Analysis parameters
 H = 7;      % harmonic order
-N = 2^6;    % number of time samples per period
+N = 4*H+1;  % number of time samples per period, cf. Appendix A in https://doi.org/10.1016/j.ymssp.2019.106503
 Om_s = .5;  % start frequency
 Om_e = 1.6; % end frequency
 
