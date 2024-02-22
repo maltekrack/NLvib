@@ -7,6 +7,10 @@
 % free-interface modes. Specifically, we define M_lo=1 and M_hi=5, for
 % the low- and the high-fidelity model, respectively. Simulstaneously a
 % harmonic refinement from H_lo=1 to H_hi=11 is performed.
+% The example is from Gross et al. "A new paradigm for multi-fidelity 
+% continuation using parallel model refinement", Computer Methods in 
+% Applied Mechanics and Engineering, 2024,
+% https://doi.org/10.1016/j.cma.2024.116860.
 %========================================================================
 % This file is part of NLvib - PEACE.
 % 
