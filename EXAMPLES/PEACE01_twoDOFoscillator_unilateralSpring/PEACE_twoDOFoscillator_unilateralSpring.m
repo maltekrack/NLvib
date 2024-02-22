@@ -6,7 +6,10 @@
 % reference response (stiffness=200, H=15) is hard to obtain using the
 % conventional continuation procedure. Thus, we begin the analysis with a
 % simpler system (stiffness=10, H=1), and successively refine.
-%
+% The example is from Gross et al. "A new paradigm for multi-fidelity 
+% continuation using parallel model refinement", Computer Methods in 
+% Applied Mechanics and Engineering, 2024,
+% https://doi.org/10.1016/j.cma.2024.116860.
 % 
 %========================================================================
 % This file is part of NLvib - PEACE.
