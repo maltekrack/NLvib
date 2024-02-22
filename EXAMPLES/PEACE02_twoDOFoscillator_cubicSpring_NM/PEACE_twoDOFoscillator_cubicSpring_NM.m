@@ -7,6 +7,10 @@
 % and subsequently refine to the high-fidelity model (high harmonic
 % truncation order). To capture the relevant topology of the high-fidelity
 % solution curve we recommend to start with H_lo=3.
+% The example is from Gross et al. "A new paradigm for multi-fidelity 
+% continuation using parallel model refinement", Computer Methods in 
+% Applied Mechanics and Engineering, 2024,
+% https://doi.org/10.1016/j.cma.2024.116860.
 %========================================================================
 % This file is part of NLvib - PEACE.
 % 
