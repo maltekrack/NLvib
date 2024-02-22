@@ -1,8 +1,10 @@
 %========================================================================
 % DESCRIPTION:
 % Matlab function for H- and M-refinement based on the PEACE algorithm
-% published in "A new paradigm for multi-fidelity continuation using 
-% parallel model refinement" (currently under review).
+% published in Gross et al. "A new paradigm for multi-fidelity 
+% continuation using parallel model refinement", Computer Methods in 
+% Applied Mechanics and Engineering, 2024,
+% https://doi.org/10.1016/j.cma.2024.116860.
 %========================================================================
 % This file is part of NLvib - PEACE.
 % 
