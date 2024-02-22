@@ -53,7 +53,7 @@ analysis = 'FRF';
 
 % Analysis parameters
 H = 7;         % harmonic order
-N = 2^8;       % number of time samples per period
+N = 4*H+1;     % number of time samples per period, cf. Appendix A in https://doi.org/10.1016/j.ymssp.2019.106503
 Om_s = .8;     % start frequency
 Om_e = 1.4;    % end frequency
 
