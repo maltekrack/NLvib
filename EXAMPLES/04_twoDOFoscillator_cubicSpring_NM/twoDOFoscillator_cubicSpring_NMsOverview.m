@@ -57,7 +57,7 @@ analysis = 'NMA';
 
 % Analysis parameters
 H = 7;              % harmonic order
-N = 2^7;           % number of time samples per period
+N = 4*H+1;          % number of time samples per period, cf. Appendix A in https://doi.org/10.1016/j.ymssp.2019.106503
 log10a_s = -1;      % start vibration level (log10 of modal mass)
 log10a_e = 1.5;      % end vibration level (log10 of modal mass)
 inorm = 1;          % coordinate for phase normalization
