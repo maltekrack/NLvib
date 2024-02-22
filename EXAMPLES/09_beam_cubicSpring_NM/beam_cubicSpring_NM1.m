@@ -2,7 +2,7 @@
 % DESCRIPTION: 
 % Investigation of the dynamics of a cantilevered Euler-Bernoulli beam
 % with cubic spring at its free end, in accordance with [F. Thouverez:
-% Presentation of the ECL benchmark, MSSP 17 (1)(2003)195–202].
+% Presentation of the ECL benchmark, MSSP 17 (1)(2003)195â€“202].
 %========================================================================
 % This file is part of NLvib.
 % 
@@ -60,7 +60,7 @@ analysis = 'NMA';
 
 % Analysis parameters
 H = 5;              % harmonic order
-N = 2^6;            % number of time samples per period
+N = 4*H+1;          % number of time samples per period, cf. Appendix A in https://doi.org/10.1016/j.ymssp.2019.106503
 imod = 1;           % mode to be analyzed
 log10a_s = -5;      % start vibration level (log10 of modal mass)
 log10a_e = -3;      % end vibration level (log10 of modal mass)
